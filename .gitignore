@@ -1,0 +1,14 @@
+/.idea/
+/.vscode/
+/.specify/**/tasks.md
+/backend/target/
+/frontend/dist/
+/frontend/node_modules/
+/frontend/.vite/
+/frontend/.env.local
+/frontend/.env.*.local
+/backend/.env.local
+/backend/.env.*.local
+/node_modules/
+*.log
+*.class

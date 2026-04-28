@@ -1,0 +1,22 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: mypetstore
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/mypetstore}
+    username: ${DATABASE_USERNAME:mypetstore}
+    password: ${DATABASE_PASSWORD:mypetstore}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  cors:
+    allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}
