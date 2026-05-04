@@ -22,6 +22,6 @@ public class CatalogController {
 
     @GetMapping("/catalog")
     public List<PetListing> catalog() {
-        return catalogService.findFeaturedCatalog();
+        return catalogService.findAllCatalog();
     }
 }

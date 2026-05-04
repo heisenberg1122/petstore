@@ -1,14 +1,19 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import PetDetailPage from './PetDetailPage';
+import CartPage from './CartPage';
+import AboutPage from './AboutPage';
+import ContactPage from './ContactPage';
+import LoginPage from './LoginPage';
+import AdminLoginPage from './AdminLoginPage';
+import AdminDashboard from './AdminDashboard';
+import CheckoutPage from './CheckoutPage';
+import { useAuth } from './AuthContext';
+import SearchIcon from '@mui/icons-material/Search';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import PetsOutlinedIcon from '@mui/icons-material/PetsOutlined';
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
-import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import SortIcon from '@mui/icons-material/Sort';
-import CloseIcon from '@mui/icons-material/Close';
 import {
   AppBar,
   Avatar,
@@ -21,243 +26,236 @@ import {
   Chip,
   Container,
   CssBaseline,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
   IconButton,
+  InputAdornment,
+  MenuItem,
+  Select,
+  Slider,
   Stack,
+  TextField,
   Toolbar,
   Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Slider,
-  FormControl,
-  Select
+  ThemeProvider,
+  createTheme,
+  alpha,
 } from '@mui/material';
-import { fallbackCatalog, PetListing, PetCategory } from './data';
-
-const categoryInfo: Record<PetCategory, { label: string; icon: ReactNode; color: string }> = {
-  DOGS: { label: 'Dogs', icon: <PetsOutlinedIcon />, color: '#8B4513' },
-  CATS: { label: 'Cats', icon: <PetsOutlinedIcon />, color: '#FF6B6B' },
-  BIRDS: { label: 'Birds', icon: <PetsOutlinedIcon />, color: '#FFD700' },
-  FISHES: { label: 'Fishes', icon: <PetsOutlinedIcon />, color: '#0066CC' }
-};
+import { cutePawFallback, fallbackCatalog, PetListing } from './data';
+import { bustImageCache } from './utils';
 
 interface CartItem extends PetListing {
   quantity: number;
 }
 
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: { main: '#ff8a65' },
+    secondary: { main: '#49c5b6' },
+    background: { default: '#fff8f2', paper: '#fffdfb' },
+    text: { primary: '#243047', secondary: '#667085' },
+  },
+  shape: { borderRadius: 24 },
+  typography: {
+    fontFamily: 'Nunito, Segoe UI, system-ui, sans-serif',
+    h1: { fontWeight: 900 },
+    h2: { fontWeight: 900 },
+    h3: { fontWeight: 900 },
+    h4: { fontWeight: 800 },
+    h5: { fontWeight: 800 },
+    h6: { fontWeight: 800 },
+  },
+  components: {
+    MuiButton: { styleOverrides: { root: { borderRadius: 999, textTransform: 'none', fontWeight: 800 } } },
+    MuiCard: { styleOverrides: { root: { borderRadius: 28 } } },
+    MuiChip: { styleOverrides: { root: { borderRadius: 999, fontWeight: 800 } } },
+    MuiTextField: { defaultProps: { fullWidth: true } },
+  },
+});
+
 function currency(value: string | number) {
-  const num = typeof value === 'string' ? Number(value) : value;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(num);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value));
 }
 
-function FeatureCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return (
-    <Box sx={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 2,
-      p: 2,
-      borderRadius: '12px',
-      bgcolor: '#f5f5f5',
-      border: '1px solid #e0e0e0'
-    }}>
-      <Avatar sx={{ bgcolor: '#1976d2', color: 'white' }}>{icon}</Avatar>
-      <Box>
-        <Typography variant="caption" color="text.secondary" display="block">
-          {label}
-        </Typography>
-        <Typography variant="subtitle2" fontWeight={700}>
-          {value}
-        </Typography>
-      </Box>
-    </Box>
-  );
+function titleize(value: string) {
+  return value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function hashColor(value: string) {
+  const palette = ['#ff8a65', '#49c5b6', '#f7b267', '#9d7cff', '#ff6b9d', '#7bc47f'];
+  const index = Math.abs([...value].reduce((acc, char) => acc + char.charCodeAt(0), 0)) % palette.length;
+  return palette[index];
 }
 
 function ProductCard({ item, onAddToCart }: { item: PetListing; onAddToCart: (item: PetListing) => void }) {
-  const catInfo = categoryInfo[item.category];
-  
+  const accent = hashColor(item.category || item.categoryName || item.name);
+
   return (
-    <Card sx={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      border: '1px solid #e0e0e0',
-      transition: 'all 0.3s ease',
-      '&:hover': {
-        boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
-        transform: 'translateY(-4px)'
-      }
-    }}>
-      <Box sx={{ position: 'relative', overflow: 'hidden', height: '220px' }}>
+    <Card className="pet-card-hover" sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', border: '1px solid rgba(36,48,71,0.08)', boxShadow: '0 14px 36px rgba(36,48,71,0.08)' }}>
+      <Box component={Link} to={`/pet/${item.id}`} sx={{ position: 'relative', overflow: 'hidden', height: 230, bgcolor: alpha(accent, 0.08), display: 'block', textDecoration: 'none' }}>
         <CardMedia
           component="img"
-          height="220"
-          image={item.imageUrl}
+          image={item.images && item.images.length > 0 ? bustImageCache(item.images[0]) : cutePawFallback}
           alt={item.name}
-          sx={{
-            objectFit: 'cover',
-            transition: 'transform 0.3s ease',
-            '&:hover': { transform: 'scale(1.05)' }
+          onError={(event) => {
+            event.currentTarget.src = cutePawFallback;
           }}
+          sx={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 250ms ease', '&:hover': { transform: 'scale(1.05)' } }}
         />
         {item.featured && (
-          <Chip
-            label="Featured"
-            size="small"
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              bgcolor: '#ffc107',
-              fontWeight: 700
-            }}
-          />
+          <Chip label="Featured" size="small" sx={{ position: 'absolute', top: 12, right: 12, bgcolor: '#fff5da', color: '#8b5e00' }} />
         )}
       </Box>
 
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-          <Chip
-            label={categoryInfo[item.category].label}
-            size="small"
-            sx={{
-              bgcolor: catInfo.color,
-              color: 'white',
-              fontWeight: 600,
-              height: '24px'
-            }}
-          />
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-            Stock: {item.stockQuantity}
-          </Typography>
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.2, p: 2.5 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1} flexWrap="wrap">
+          <Chip label={item.categoryName || titleize(item.category)} size="small" sx={{ bgcolor: alpha(accent, 0.14), color: accent }} />
+          <Typography variant="caption" color="text.secondary" fontWeight={800}>Stock {item.stockQuantity}</Typography>
         </Stack>
 
-        <Typography variant="h6" sx={{ mb: 0.5, fontWeight: 700, color: '#333' }}>
-          {item.name}
-        </Typography>
+        <Box>
+          <Typography variant="h6" sx={{ lineHeight: 1.15 }}>{item.name}</Typography>
+          {item.breed && (
+            <Typography variant="body2" color="text.secondary">{item.species ? `${item.species} · ` : ''}{item.breed}</Typography>
+          )}
+        </Box>
 
-        {item.breed && (
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
-            Breed: {item.breed}
-          </Typography>
-        )}
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flexGrow: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
           {item.description}
         </Typography>
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: '#1976d2' }}>
-            {currency(item.price)}
-          </Typography>
-          {item.age && (
-            <Typography variant="caption" sx={{ bgcolor: '#f0f0f0', px: 1, py: 0.5, borderRadius: '4px', fontWeight: 600 }}>
-              Age: {item.age}
-            </Typography>
-          )}
+        <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+          <Typography variant="h5" sx={{ color: accent, fontWeight: 900 }}>{currency(item.price)}</Typography>
+          {item.age && <Chip label={item.age} size="small" variant="outlined" />}
         </Stack>
 
-        <Button
-          variant="contained"
-          fullWidth
-          startIcon={<ShoppingBagOutlinedIcon />}
-          onClick={() => onAddToCart(item)}
-          sx={{
-            bgcolor: '#1976d2',
-            fontWeight: 700,
-            '&:hover': {
-              bgcolor: '#1565c0'
-            }
-          }}
-        >
-          Add to Cart
+        <Button variant="contained" fullWidth startIcon={<ShoppingBagOutlinedIcon />} onClick={() => onAddToCart(item)} sx={{ mt: 0.5, boxShadow: 'none', '&:hover': { boxShadow: '0 14px 24px rgba(255,138,101,0.2)' } }}>
+          Take Me Home! 🐾
         </Button>
       </CardContent>
     </Card>
   );
 }
 
-export default function App() {
+// Navbar as a separate component so it can use hooks
+function Navbar({ cartCount, onBrowse }: { cartCount: number; onBrowse: () => void }) {
+  const location = useLocation();
+  const { user, logout } = useAuth();
+  const isHome = location.pathname === '/';
+
+  const navBtn = (label: string, to: string) => (
+    <Button
+      variant="text"
+      component={Link}
+      to={to}
+      sx={{
+        color: location.pathname === to ? 'primary.main' : 'text.secondary',
+        fontWeight: location.pathname === to ? 900 : 800,
+      }}
+    >
+      {label}
+    </Button>
+  );
+
+  return (
+    <AppBar position="sticky" elevation={0} sx={{ bgcolor: alpha('#ffffff', 0.85), backdropFilter: 'blur(18px)', color: 'text.primary', borderBottom: '1px solid rgba(36,48,71,0.08)' }}>
+      <Toolbar>
+        <Container maxWidth="lg" sx={{ px: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            component={Link}
+            to="/"
+            sx={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer', '&:hover': { opacity: 0.85 }, transition: 'opacity 0.2s ease' }}
+          >
+            <Avatar sx={{ bgcolor: 'primary.main', color: 'white', boxShadow: '0 12px 24px rgba(255,138,101,0.22)' }}><PetsOutlinedIcon /></Avatar>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1 }}>MyPetStore</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>Cute pets, easy shopping</Typography>
+            </Box>
+          </Stack>
+
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+            <Button
+              variant="text"
+              onClick={onBrowse}
+              sx={{ color: isHome ? 'primary.main' : 'text.secondary', fontWeight: 800 }}
+            >
+              Browse
+            </Button>
+            {navBtn('About', '/about')}
+            {navBtn('Contact', '/contact')}
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              {user ? (
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Avatar 
+                    src={user.photoURL || undefined} 
+                    sx={{ width: 32, height: 32, bgcolor: 'secondary.main', fontSize: '0.875rem' }}
+                  >
+                    {user.displayName?.[0] || user.email?.[0]}
+                  </Avatar>
+                  <Button 
+                    variant="text" 
+                    size="small" 
+                    onClick={logout} 
+                    sx={{ fontWeight: 800, color: 'text.secondary' }}
+                  >
+                    Logout
+                  </Button>
+                </Stack>
+              ) : (
+                <Button
+                  variant="outlined"
+                  component={Link}
+                  to="/login"
+                  sx={{
+                    borderRadius: 999, fontWeight: 800, borderColor: 'primary.main', color: 'primary.main',
+                    '&:hover': { bgcolor: alpha('#ff8a65', 0.08) }
+                  }}
+                >
+                  Login
+                </Button>
+              )}
+            </Box>
+            <IconButton component={Link} to="/cart" sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }}>
+              <Badge badgeContent={cartCount} color="secondary">
+                <ShoppingBagOutlinedIcon />
+              </Badge>
+            </IconButton>
+          </Stack>
+        </Container>
+      </Toolbar>
+    </AppBar>
+  );
+}
+
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const [catalog, setCatalog] = useState<PetListing[]>(fallbackCatalog);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<PetCategory | 'ALL'>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 3000]);
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('name');
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const addToCart = (item: PetListing) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((i) => i.id === item.id);
-      if (existingItem) {
-        return prevCart.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
-      }
-      return [...prevCart, { ...item, quantity: 1 }];
-    });
-  };
-
-  const removeFromCart = (itemId: number) => {
-    setCart((prevCart) => prevCart.filter((i) => i.id !== itemId));
-  };
-
-  const updateQuantity = (itemId: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(itemId);
-    } else {
-      setCart((prevCart) =>
-        prevCart.map((i) =>
-          i.id === itemId ? { ...i, quantity } : i
-        )
-      );
-    }
-  };
-
-  const cartTotal = cart.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  // Filter and sort logic
-  const filteredAndSortedCatalog = useMemo(() => {
-    let filtered = catalog.filter((item) => {
-      const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (item.breed?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-      const price = Number(item.price);
-      const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
-      return matchesCategory && matchesSearch && matchesPrice;
-    });
-
-    // Sort
-    if (sortBy === 'price-asc') {
-      filtered.sort((a, b) => Number(a.price) - Number(b.price));
-    } else if (sortBy === 'price-desc') {
-      filtered.sort((a, b) => Number(b.price) - Number(a.price));
-    } else {
-      filtered.sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    return filtered;
-  }, [catalog, selectedCategory, searchTerm, priceRange, sortBy]);
-
   useEffect(() => {
     const controller = new AbortController();
-
     async function loadCatalog() {
       try {
         const response = await fetch('/api/catalog', { signal: controller.signal });
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) return;
         const data = (await response.json()) as PetListing[];
         if (Array.isArray(data) && data.length > 0) {
           setCatalog(data);
@@ -266,358 +264,213 @@ export default function App() {
         setCatalog(fallbackCatalog);
       }
     }
-
     void loadCatalog();
-
     return () => controller.abort();
   }, []);
 
+  const categories = useMemo(
+    () => Array.from(new Set(catalog.map((item) => item.category))).filter(Boolean).sort((a, b) => a.localeCompare(b)),
+    [catalog],
+  );
+
+  const filteredCatalog = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    const filtered = catalog.filter((item) => {
+      const categoryMatch = selectedCategory === 'ALL' || item.category === selectedCategory;
+      const searchable = [item.name, item.breed, item.age, item.species, item.categoryName, item.description]
+        .filter(Boolean).join(' ').toLowerCase();
+      const searchMatch = !query || searchable.includes(query);
+      const price = Number(item.price);
+      const priceMatch = price >= priceRange[0] && price <= priceRange[1];
+      return categoryMatch && searchMatch && priceMatch;
+    });
+    const sorter = {
+      name: (a: PetListing, b: PetListing) => a.name.localeCompare(b.name),
+      'price-asc': (a: PetListing, b: PetListing) => Number(a.price) - Number(b.price),
+      'price-desc': (a: PetListing, b: PetListing) => Number(b.price) - Number(a.price),
+    }[sortBy];
+    return filtered.sort(sorter);
+  }, [catalog, selectedCategory, searchTerm, priceRange, sortBy]);
+
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const addToCart = (item: PetListing) => {
+    setCart((prev) => {
+      const existing = prev.find((entry) => entry.id === item.id);
+      if (existing) {
+        return prev.map((entry) => (entry.id === item.id ? { ...entry, quantity: entry.quantity + 1 } : entry));
+      }
+      return [...prev, { ...item, quantity: 1 }];
+    });
+  };
+
+  const updateQuantity = (itemId: number, quantity: number) => {
+    setCart((prev) => prev.map((item) => (item.id === itemId ? { ...item, quantity } : item)).filter((item) => item.quantity > 0));
+  };
+
+  const removeFromCart = (itemId: number) => setCart((prev) => prev.filter((item) => item.id !== itemId));
+  const clearCart = () => setCart([]);
+
+  const handleBrowse = () => {
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
+    } else {
+      document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <>
-      <CssBaseline />
-      <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa' }}>
-        {/* Header */}
-        <AppBar position="sticky" elevation={1} sx={{ bgcolor: 'white', color: '#333' }}>
-          <Toolbar>
-            <Container maxWidth="lg" sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', px: 0 }}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar sx={{ bgcolor: '#1976d2', color: 'white' }}>
-                  <PetsOutlinedIcon />
-                </Avatar>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800, color: '#333' }}>
-                    MyPetStore
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Premium Pet Marketplace
-                  </Typography>
-                </Box>
-              </Stack>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Navbar cartCount={cartCount} onBrowse={handleBrowse} />
 
-              <Stack direction="row" spacing={1}>
-                <Button sx={{ textTransform: 'none', fontWeight: 600, color: '#333' }}>
-                  Browse
-                </Button>
-                <Button sx={{ textTransform: 'none', fontWeight: 600, color: '#333' }}>
-                  About
-                </Button>
-                <Button sx={{ textTransform: 'none', fontWeight: 600, color: '#333' }}>
-                  Contact
-                </Button>
-                <IconButton
-                  onClick={() => setCartOpen(true)}
-                  sx={{
-                    bgcolor: '#1976d2',
-                    color: 'white',
-                    ml: 2,
-                    '&:hover': {
-                      bgcolor: '#1565c0'
-                    }
-                  }}
-                >
-                  <Badge badgeContent={cartCount} color="error">
-                    <ShoppingBagOutlinedIcon />
-                  </Badge>
-                </IconButton>
-              </Stack>
-            </Container>
-          </Toolbar>
-        </AppBar>
-
-        {/* Hero Section */}
-        <Box sx={{ bgcolor: 'white', py: 6, borderBottom: '1px solid #e0e0e0' }}>
-          <Container maxWidth="lg">
-            <Grid container spacing={4} alignItems="center">
-              <Grid item xs={12} md={7}>
-                <Typography variant="h3" sx={{ fontWeight: 900, mb: 2, color: '#333' }}>
-                  Find Your Perfect Companion
-                </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 3, fontWeight: 500 }}>
-                  Discover a wide selection of healthy, well-cared-for pets from trusted breeders. Every animal is health-checked and ready for their forever home.
-                </Typography>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                  <Button variant="contained" size="large" sx={{ textTransform: 'none', fontWeight: 700 }}>
-                    Browse All Pets
-                  </Button>
-                  <Button variant="outlined" size="large" sx={{ textTransform: 'none', fontWeight: 700 }}>
-                    Learn More
-                  </Button>
-                </Stack>
-              </Grid>
-
-              <Grid item xs={12} md={5}>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <FeatureCard icon={<VerifiedOutlinedIcon />} label="Health Verified" value="100% Certified" />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <FeatureCard icon={<LocalShippingOutlinedIcon />} label="Safe Delivery" value="Door to Door" />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <FeatureCard icon={<ShoppingBagOutlinedIcon />} label="Shop Online" value="Easy Checkout" />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <FeatureCard icon={<PetsOutlinedIcon />} label="Adoption" value="24/7 Support" />
-                  </Grid>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Container>
-        </Box>
-
-        {/* Filters & Search */}
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Stack spacing={3}>
-            <Box sx={{
-              display: 'flex',
-              gap: 2,
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              bgcolor: 'white',
-              p: 2,
-              borderRadius: '8px',
-              border: '1px solid #e0e0e0'
-            }}>
-              {/* Search */}
-              <TextField
-                placeholder="Search by name or breed..."
-                size="small"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                }}
-                sx={{ flex: 1, minWidth: '250px' }}
-              />
-
-              {/* Category Filter */}
-              <FormControl size="small" sx={{ minWidth: '140px' }}>
-                <Select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value as PetCategory | 'ALL')}
-                >
-                  <MenuItem value="ALL">All Categories</MenuItem>
-                  <MenuItem value="DOGS">Dogs</MenuItem>
-                  <MenuItem value="CATS">Cats</MenuItem>
-                  <MenuItem value="BIRDS">Birds</MenuItem>
-                  <MenuItem value="FISHES">Fishes</MenuItem>
-                </Select>
-              </FormControl>
-
-              {/* Sort */}
-              <FormControl size="small" sx={{ minWidth: '140px' }}>
-                <Select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'price-asc' | 'price-desc' | 'name')}
-                >
-                  <MenuItem value="name">Name (A-Z)</MenuItem>
-                  <MenuItem value="price-asc">Price (Low-High)</MenuItem>
-                  <MenuItem value="price-desc">Price (High-Low)</MenuItem>
-                </Select>
-              </FormControl>
-
-              {/* Filter Button */}
-              <Button
-                variant="outlined"
-                onClick={() => setFilterOpen(true)}
-                sx={{ textTransform: 'none', fontWeight: 600 }}
-              >
-                Advanced Filters
-              </Button>
-            </Box>
-
-            {/* Category Chips */}
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              <Chip
-                label="All Categories"
-                onClick={() => setSelectedCategory('ALL')}
-                variant={selectedCategory === 'ALL' ? 'filled' : 'outlined'}
-                sx={{ fontWeight: 600 }}
-              />
-              {(['DOGS', 'CATS', 'BIRDS', 'FISHES'] as PetCategory[]).map((cat) => (
-                <Chip
-                  key={cat}
-                  label={categoryInfo[cat].label}
-                  onClick={() => setSelectedCategory(cat)}
-                  variant={selectedCategory === cat ? 'filled' : 'outlined'}
-                  sx={{
-                    fontWeight: 600,
-                    ...(selectedCategory === cat && {
-                      bgcolor: categoryInfo[cat].color,
-                      color: 'white'
-                    })
-                  }}
-                />
-              ))}
-            </Stack>
-
-            {/* Results Count */}
-            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-              Showing {filteredAndSortedCatalog.length} of {catalog.length} pets
-            </Typography>
-          </Stack>
-        </Container>
-
-        {/* Products Grid */}
-        <Container maxWidth="lg" sx={{ pb: 6 }}>
-          {filteredAndSortedCatalog.length > 0 ? (
-            <Grid container spacing={3}>
-              {filteredAndSortedCatalog.map((item) => (
-                <Grid key={item.id} item xs={12} sm={6} lg={4} xl={3}>
-                  <ProductCard item={item} onAddToCart={addToCart} />
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <PetsOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary">
-                No pets found matching your criteria
-              </Typography>
-              <Button
-                variant="text"
-                sx={{ mt: 2 }}
-                onClick={() => {
-                  setSelectedCategory('ALL');
-                  setSearchTerm('');
-                  setPriceRange([0, 3000]);
-                }}
-              >
-                Clear Filters
-              </Button>
-            </Box>
-          )}
-        </Container>
-
-        {/* Advanced Filter Dialog */}
-        <Dialog open={filterOpen} onClose={() => setFilterOpen(false)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>Filter Options</DialogTitle>
-          <DialogContent sx={{ pt: 3 }}>
-            <Stack spacing={3}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>
-                  Price Range: {currency(priceRange[0])} - {currency(priceRange[1])}
-                </Typography>
-                <Slider
-                  value={priceRange}
-                  onChange={(_, newValue) => setPriceRange(newValue as [number, number])}
-                  min={0}
-                  max={3000}
-                  step={50}
-                  valueLabelDisplay="auto"
-                />
-              </Box>
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setFilterOpen(false)}>Close</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Shopping Cart Dialog */}
-        <Dialog open={cartOpen} onClose={() => setCartOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            Shopping Cart ({cartCount} items)
-            <IconButton size="small" onClick={() => setCartOpen(false)}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-
-          <DialogContent sx={{ pt: 2 }}>
-            {cart.length === 0 ? (
-              <Box sx={{ py: 4, textAlign: 'center' }}>
-                <ShoppingBagOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">
-                  Your cart is empty
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Start shopping to add items to your cart
-                </Typography>
-              </Box>
-            ) : (
-              <Stack spacing={2}>
-                {cart.map((item) => (
-                  <Card key={item.id} sx={{ p: 2, border: '1px solid #e0e0e0' }}>
-                    <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between">
-                      <Box sx={{ flex: 1 }}>
-                        <Typography fontWeight={700} sx={{ mb: 0.5 }}>
-                          {item.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          {item.breed && `Breed: ${item.breed}`}
-                        </Typography>
-                        <Typography variant="subtitle2" sx={{ color: '#1976d2', fontWeight: 700 }}>
-                          {currency(item.price)} each
-                        </Typography>
-                      </Box>
-
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          sx={{ minWidth: '32px', p: 0.5 }}
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        >
-                          −
-                        </Button>
-                        <Typography sx={{ minWidth: '24px', textAlign: 'center', fontWeight: 700 }}>
-                          {item.quantity}
-                        </Typography>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          sx={{ minWidth: '32px', p: 0.5 }}
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        >
-                          +
-                        </Button>
-                        <IconButton
-                          size="small"
-                          onClick={() => removeFromCart(item.id)}
-                          sx={{ color: '#d32f2f' }}
-                        >
-                          <DeleteOutlineIcon fontSize="small" />
-                        </IconButton>
+      <Box sx={{ flexGrow: 1 }}>
+      <Routes>
+        {/* HOME */}
+        <Route path="/" element={
+          <>
+            <Box sx={{ py: { xs: 6, md: 8 }, background: 'linear-gradient(135deg, rgba(255,138,101,0.08), rgba(73,197,182,0.10))' }}>
+              <Container maxWidth="lg">
+                <Grid container spacing={4} alignItems="center">
+                  <Grid item xs={12} md={7}>
+                    <Stack spacing={2.5}>
+                      <Chip label="Spring Boot + React + Render" sx={{ alignSelf: 'flex-start', bgcolor: alpha('#49c5b6', 0.16), color: '#22756f' }} />
+                      <Typography variant="h2" sx={{ fontSize: { xs: '2.5rem', md: '4rem' }, lineHeight: 1.02 }}>Find your next fluffy best friend.</Typography>
+                      <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 680 }}>Browse adorable pets, filter by category, sort by price, and keep the shopping vibe soft, playful, and easy to use.</Typography>
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                        <Button size="large" variant="contained" onClick={() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' })}>Browse Pets</Button>
+                        <Button size="large" variant="outlined" onClick={() => setFilterOpen(true)}>Adjust Price Range</Button>
                       </Stack>
                     </Stack>
-                    <Typography variant="body2" sx={{ mt: 1, textAlign: 'right', color: '#1976d2', fontWeight: 700 }}>
-                      Subtotal: {currency(Number(item.price) * item.quantity)}
-                    </Typography>
-                  </Card>
-                ))}
+                  </Grid>
+                  <Grid item xs={12} md={5}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                      <Box
+                        component="img"
+                        src="/hero-image.png"
+                        alt="Cute pet shop pets"
+                        sx={{ width: '100%', maxWidth: 450, height: 'auto', borderRadius: 6, boxShadow: '0 24px 48px rgba(36,48,71,0.15)', transform: 'rotate(2deg)', transition: 'transform 0.3s ease', '&:hover': { transform: 'rotate(0deg) scale(1.02)' } }}
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Container>
+            </Box>
 
-                {/* Total */}
-                <Card sx={{ p: 2, bgcolor: '#f5f5f5', border: '1px solid #e0e0e0' }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography fontWeight={700} sx={{ fontSize: '16px' }}>
-                      Total:
-                    </Typography>
-                    <Typography sx={{ fontWeight: 800, fontSize: '20px', color: '#1976d2' }}>
-                      {currency(cartTotal)}
-                    </Typography>
+            <Container id="catalog-section" maxWidth="lg" sx={{ py: 4 }}>
+              <Stack spacing={3}>
+                <Box sx={{ p: 2.2, borderRadius: 5, bgcolor: alpha('#ffffff', 0.88), border: '1px solid rgba(36,48,71,0.08)', boxShadow: '0 14px 34px rgba(36,48,71,0.05)' }}>
+                  <Stack spacing={2}>
+                    <TextField
+                      placeholder="Search pets, breeds, or descriptions..."
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment> }}
+                    />
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                      <Button variant={selectedCategory === 'ALL' ? 'contained' : 'outlined'} onClick={() => setSelectedCategory('ALL')}>All</Button>
+                      {categories.map((category) => (
+                        <Button key={category} variant={selectedCategory === category ? 'contained' : 'outlined'} onClick={() => setSelectedCategory(category)}>
+                          {titleize(category)}
+                        </Button>
+                      ))}
+                    </Stack>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 800 }}>Sort by</Typography>
+                        <Select fullWidth value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)}>
+                          <MenuItem value="name">Name (A-Z)</MenuItem>
+                          <MenuItem value="price-asc">Price (Low-High)</MenuItem>
+                          <MenuItem value="price-desc">Price (High-Low)</MenuItem>
+                        </Select>
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 800 }}>Results</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 900 }}>{filteredCatalog.length} of {catalog.length} pets</Typography>
+                      </Box>
+                    </Stack>
                   </Stack>
-                </Card>
+                </Box>
               </Stack>
-            )}
-          </DialogContent>
+            </Container>
 
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setCartOpen(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>
-              Continue Shopping
-            </Button>
-            <Button
-              variant="contained"
-              disabled={cart.length === 0}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 700
-              }}
-            >
-              Proceed to Checkout
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </>
+            <Container maxWidth="lg" sx={{ pb: 8 }}>
+              <Grid container spacing={3}>
+                {filteredCatalog.length > 0 ? filteredCatalog.map((item) => (
+                  <Grid key={item.id} item xs={12} sm={6} lg={4} xl={3}>
+                    <ProductCard item={item} onAddToCart={addToCart} />
+                  </Grid>
+                )) : (
+                  <Grid item xs={12}>
+                    <Box sx={{ textAlign: 'center', py: 8, borderRadius: 6, border: '1px dashed rgba(36,48,71,0.12)', bgcolor: alpha('#ffffff', 0.7) }}>
+                      <PetsOutlinedIcon sx={{ fontSize: 72, color: 'text.disabled', mb: 1 }} />
+                      <Typography variant="h6" sx={{ mb: 1 }}>No pets found matching your filters</Typography>
+                      <Button variant="contained" onClick={() => { setSelectedCategory('ALL'); setSearchTerm(''); setPriceRange([0, 3000]); }}>Clear Filters</Button>
+                    </Box>
+                  </Grid>
+                )}
+              </Grid>
+            </Container>
+          </>
+        } />
+
+        {/* DETAIL */}
+        <Route path="/pet/:id" element={<PetDetailPage onAddToCart={addToCart} />} />
+
+        {/* CART */}
+        <Route path="/cart" element={<CartPage cart={cart} onUpdateQuantity={updateQuantity} onRemove={removeFromCart} onClear={clearCart} />} />
+
+        {/* ABOUT */}
+        <Route path="/about" element={<AboutPage />} />
+
+        {/* CONTACT */}
+        <Route path="/contact" element={<ContactPage />} />
+
+        {/* LOGIN */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* CHECKOUT */}
+        <Route 
+          path="/checkout" 
+          element={
+            user ? (
+              <CheckoutPage cart={cart} onClear={clearCart} />
+            ) : (
+              <Navigate to="/login" state={{ from: location }} replace />
+            )
+          } 
+        />
+
+        {/* ADMIN */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      </Routes>
+
+      {/* Price Range Dialog */}
+      <Dialog open={filterOpen} onClose={() => setFilterOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 900 }}>Price range</DialogTitle>
+        <DialogContent sx={{ pt: 2.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {currency(priceRange[0])} to {currency(priceRange[1])}
+          </Typography>
+          <Slider value={priceRange} onChange={(_, value) => setPriceRange(value as [number, number])} min={0} max={3000} step={25} valueLabelDisplay="auto" />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFilterOpen(false)}>Done</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  </Box>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }

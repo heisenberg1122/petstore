@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyPetStore Admin</title>
+    <style>
+      :root {
+        --bg: #fff9f4;
+        --panel: rgba(255, 255, 255, 0.9);
+        --text: #253046;
+        --muted: #6f7689;
+        --accent: #ff8a65;
+        --accent-2: #49c5b6;
+        --accent-3: #f7b267;
+        --border: rgba(37, 48, 70, 0.08);
+        --shadow: 0 18px 50px rgba(37, 48, 70, 0.12);
+        font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        background: radial-gradient(circle at top left, #fff0e7 0, transparent 28%),
+                    radial-gradient(circle at top right, #e8fbf7 0, transparent 24%),
+                    linear-gradient(180deg, #fff9f4, #fffefc 70%);
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(16px);
+        background: rgba(255, 249, 244, 0.8);
+        border-bottom: 1px solid var(--border);
+        z-index: 10;
+      }
+
+      .shell {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .badge {
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: white;
+        font-size: 26px;
+        box-shadow: var(--shadow);
+      }
+
+      h1, h2, h3, p { margin: 0; }
+      h1 { font-size: clamp(2rem, 3vw, 3rem); }
+      .subtitle { color: var(--muted); margin-top: 6px; }
+      .pill-row { display: flex; gap: 10px; flex-wrap: wrap; }
+      .pill {
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.9);
+        border: 1px solid var(--border);
+        font-weight: 700;
+      }
+      .pill-button {
+        cursor: pointer;
+        font: inherit;
+      }
+      .pill-button:hover {
+        border-color: rgba(255,138,101,0.35);
+        box-shadow: 0 10px 20px rgba(37,48,70,0.08);
+      }
+
+      main.shell { padding-top: 28px; padding-bottom: 56px; }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 24px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        padding: 22px;
+      }
+
+      .panel h2 {
+        font-size: 1.25rem;
+        margin-bottom: 14px;
+      }
+
+      .muted { color: var(--muted); font-size: 0.95rem; }
+      .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+      .stat {
+        padding: 14px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, rgba(255,138,101,0.1), rgba(73,197,182,0.1));
+        border: 1px solid var(--border);
+      }
+      .stat strong { display: block; font-size: 1.3rem; }
+
+      form { display: grid; gap: 12px; }
+      .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .field { display: grid; gap: 8px; }
+      .field.full { grid-column: 1 / -1; }
+      label { font-weight: 700; font-size: 0.92rem; }
+      input, select, textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        background: white;
+        border-radius: 18px;
+        padding: 12px 14px;
+        font: inherit;
+        color: var(--text);
+        outline: none;
+      }
+      textarea { min-height: 110px; resize: vertical; }
+      input:focus, select:focus, textarea:focus { border-color: rgba(255,138,101,0.7); box-shadow: 0 0 0 4px rgba(255,138,101,0.12); }
+
+      .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+      button {
+        border: none;
+        border-radius: 16px;
+        padding: 12px 16px;
+        font: inherit;
+        font-weight: 800;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      }
+      button:hover { transform: translateY(-1px) scale(1.01); }
+      .primary { color: white; background: linear-gradient(135deg, var(--accent), #ff6f91); box-shadow: 0 14px 26px rgba(255,138,101,0.25); }
+      .secondary { background: linear-gradient(135deg, #e8fbf7, #f7fffd); color: #2b5b58; border: 1px solid rgba(73,197,182,0.22); }
+      .ghost { background: #fff; border: 1px solid var(--border); color: var(--text); }
+      .danger { background: linear-gradient(135deg, #ffefef, #ffe1e1); color: #b42318; border: 1px solid rgba(180, 35, 24, 0.12); }
+
+      .list { display: grid; gap: 12px; margin-top: 14px; }
+      .row {
+        background: rgba(255,255,255,0.95);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+      }
+      .row .meta { display: grid; gap: 4px; }
+      .row .meta small { color: var(--muted); }
+      .thumb {
+        width: 56px; height: 56px; border-radius: 18px; object-fit: cover; background: #f8f4ef;
+        border: 1px solid var(--border);
+      }
+      .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+      table { width: 100%; border-collapse: collapse; margin-top: 14px; overflow: hidden; }
+      th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid rgba(37,48,70,0.08); vertical-align: top; }
+      th { color: var(--muted); font-size: 0.88rem; }
+      .table-wrap { overflow-x: auto; }
+      .tag { display: inline-flex; padding: 6px 10px; border-radius: 999px; background: rgba(73,197,182,0.12); color: #2f766e; font-weight: 700; font-size: 0.82rem; }
+      .status { margin-top: 12px; min-height: 24px; color: var(--muted); font-weight: 700; }
+      .split { display: grid; gap: 24px; margin-top: 24px; }
+      .row-grid { display: grid; grid-template-columns: 96px 1fr auto; gap: 14px; align-items: center; }
+      .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+
+      @media (max-width: 980px) {
+        .grid { grid-template-columns: 1fr; }
+        .form-grid, .stat-grid { grid-template-columns: 1fr; }
+        .row-grid { grid-template-columns: 72px 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="shell hero">
+        <div class="brand">
+          <div class="badge">🐾</div>
+          <div>
+            <h1>MyPetStore Admin Dashboard</h1>
+            <p class="subtitle">Manage categories, pets, pricing, stock, and images from one soft, friendly control center.</p>
+          </div>
+        </div>
+        <div class="pill-row">
+          <div class="pill" id="categoryCountPill">0 categories</div>
+          <div class="pill" id="animalCountPill">0 pets</div>
+          <div class="pill">Backend: Spring Boot + PostgreSQL</div>
+          <button class="pill pill-button" type="button" id="logoutButton">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <div class="grid">
+        <section class="panel">
+          <div class="toolbar">
+            <div>
+              <h2>Category Management</h2>
+              <p class="muted">Create and remove categories dynamically.</p>
+            </div>
+          </div>
+
+          <form id="categoryForm">
+            <div class="field full">
+              <label for="categoryName">Category name</label>
+              <input id="categoryName" name="name" placeholder="Dogs, Cats, Birds, Fishes, or your own" required />
+            </div>
+            <div class="actions">
+              <button class="primary" type="submit">Add Category</button>
+              <button class="ghost" type="button" id="resetCategoryButton">Reset</button>
+            </div>
+          </form>
+
+          <div class="list" id="categoryList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="toolbar">
+            <div>
+              <h2>Pet Listing Editor</h2>
+              <p class="muted">Create or update animals, stock levels, prices, and images.</p>
+            </div>
+            <span class="tag" id="editingTag">Creating new pet</span>
+          </div>
+
+          <form id="animalForm">
+            <input type="hidden" id="animalId" />
+            <div class="form-grid">
+              <div class="field">
+                <label for="animalName">Name</label>
+                <input id="animalName" required placeholder="Golden Retriever" />
+              </div>
+              <div class="field">
+                <label for="species">Species</label>
+                <input id="species" required placeholder="Dog" />
+              </div>
+              <div class="field">
+                <label for="breed">Breed</label>
+                <input id="breed" placeholder="Retriever" />
+              </div>
+              <div class="field">
+                <label for="age">Age</label>
+                <input id="age" placeholder="2 years" />
+              </div>
+              <div class="field">
+                <label for="price">Price</label>
+                <input id="price" type="number" min="0" step="0.01" required placeholder="1200.00" />
+              </div>
+              <div class="field">
+                <label for="stockQuantity">Stock quantity</label>
+                <input id="stockQuantity" type="number" min="0" step="1" required placeholder="3" />
+              </div>
+              <div class="field">
+                <label for="categorySelect">Category</label>
+                <select id="categorySelect" required></select>
+              </div>
+              <div class="field">
+                <label for="featured">Featured</label>
+                <select id="featured">
+                  <option value="true">Featured</option>
+                  <option value="false">Regular</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="description">Description</label>
+                <textarea id="description" required placeholder="Write a short cute description..."></textarea>
+              </div>
+              <div class="field full">
+                <label for="imageUrl">Image URL</label>
+                <input id="imageUrl" placeholder="https://... or upload below" />
+              </div>
+              <div class="field full">
+                <label for="imageFile">Upload image</label>
+                <input id="imageFile" type="file" accept="image/*" />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" type="submit" id="saveAnimalButton">Save Pet</button>
+              <button class="secondary" type="button" id="clearAnimalButton">Clear Form</button>
+            </div>
+          </form>
+          <div class="status" id="formStatus"></div>
+        </section>
+      </div>
+
+      <div class="split">
+        <section class="panel">
+          <div class="toolbar">
+            <div>
+              <h2>Category Overview</h2>
+              <p class="muted">Current categories and how many pets are linked to each one.</p>
+            </div>
+          </div>
+          <div class="list" id="categoryOverview"></div>
+        </section>
+
+        <section class="panel">
+          <div class="toolbar">
+            <div>
+              <h2>Animal Inventory</h2>
+              <p class="muted">Edit, delete, and upload photos for each pet listing.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Photo</th>
+                  <th>Pet</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Featured</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="animalTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const state = {
+        categories: [],
+        animals: [],
+        editingAnimalId: null,
+      };
+
+      const elements = {
+        categoryForm: document.getElementById('categoryForm'),
+        categoryName: document.getElementById('categoryName'),
+        categoryList: document.getElementById('categoryList'),
+        categoryOverview: document.getElementById('categoryOverview'),
+        categorySelect: document.getElementById('categorySelect'),
+        animalForm: document.getElementById('animalForm'),
+        animalId: document.getElementById('animalId'),
+        animalName: document.getElementById('animalName'),
+        species: document.getElementById('species'),
+        breed: document.getElementById('breed'),
+        age: document.getElementById('age'),
+        description: document.getElementById('description'),
+        price: document.getElementById('price'),
+        stockQuantity: document.getElementById('stockQuantity'),
+        imageUrl: document.getElementById('imageUrl'),
+        imageFile: document.getElementById('imageFile'),
+        featured: document.getElementById('featured'),
+        animalTable: document.getElementById('animalTable'),
+        formStatus: document.getElementById('formStatus'),
+        categoryCountPill: document.getElementById('categoryCountPill'),
+        animalCountPill: document.getElementById('animalCountPill'),
+        editingTag: document.getElementById('editingTag'),
+        clearAnimalButton: document.getElementById('clearAnimalButton'),
+        logoutButton: document.getElementById('logoutButton'),
+        resetCategoryButton: document.getElementById('resetCategoryButton'),
+      };
+
+      const cuteFallback = `data:image/svg+xml;utf8,${encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Cute pet placeholder">
+          <rect width="256" height="256" rx="48" fill="#fff5ef"/>
+          <circle cx="76" cy="88" r="18" fill="#ff9f7a"/>
+          <circle cx="104" cy="58" r="18" fill="#ff9f7a"/>
+          <circle cx="152" cy="58" r="18" fill="#49c5b6"/>
+          <circle cx="180" cy="88" r="18" fill="#49c5b6"/>
+          <path d="M128 108c-33 0-60 24-60 54 0 28 22 46 60 46s60-18 60-46c0-30-27-54-60-54z" fill="#ff8a65"/>
+          <circle cx="108" cy="164" r="8" fill="#fff" opacity="0.9"/>
+          <circle cx="148" cy="164" r="8" fill="#fff" opacity="0.9"/>
+        </svg>
+      `)}`;
+
+      function setStatus(message, isError = false) {
+        elements.formStatus.textContent = message;
+        elements.formStatus.style.color = isError ? '#b42318' : 'var(--muted)';
+      }
+
+      function resetAnimalForm() {
+        state.editingAnimalId = null;
+        elements.animalForm.reset();
+        elements.animalId.value = '';
+        elements.editingTag.textContent = 'Creating new pet';
+        elements.imageFile.value = '';
+        setStatus('Ready for a new pet listing.');
+      }
+
+      function categoryLabel(animal) {
+        return animal.categoryName || animal.category || 'Uncategorized';
+      }
+
+      function currency(value) {
+        const num = Number(value || 0);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+      }
+
+      async function requestJson(url, options = {}) {
+        const response = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+          },
+          ...options,
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || response.statusText);
+        }
+        if (response.status === 204) {
+          return null;
+        }
+        return response.json();
+      }
+
+      async function loadCategories() {
+        state.categories = await requestJson('/api/admin/categories');
+        renderCategories();
+        renderCategorySelect();
+      }
+
+      async function loadAnimals() {
+        state.animals = await requestJson('/api/admin/animals');
+        renderAnimals();
+      }
+
+      function renderCategorySelect() {
+        const options = ['<option value="">Select a category</option>']
+          .concat(state.categories.map((category) => `<option value="${category.id}">${category.name}</option>`))
+          .join('');
+        elements.categorySelect.innerHTML = options;
+      }
+
+      function renderCategories() {
+        elements.categoryList.innerHTML = state.categories.map((category) => `
+          <div class="row">
+            <div class="meta">
+              <strong>${category.name}</strong>
+              <small>Slug: ${category.slug} · ${category.animalCount} pets</small>
+            </div>
+            <div class="row-actions">
+              <button class="danger" type="button" data-delete-category="${category.id}">Delete</button>
+            </div>
+          </div>
+        `).join('') || '<p class="muted">No categories yet.</p>';
+
+        elements.categoryOverview.innerHTML = state.categories.map((category) => `
+          <div class="row-grid row">
+            <div class="badge" style="width:72px;height:72px;font-size:28px;">🐶</div>
+            <div class="meta">
+              <strong>${category.name}</strong>
+              <small>${category.slug}</small>
+              <small>${category.animalCount} pets linked</small>
+            </div>
+            <span class="tag">${category.animalCount} pets</span>
+          </div>
+        `).join('') || '<p class="muted">No categories available.</p>';
+
+        elements.categoryCountPill.textContent = `${state.categories.length} categories`;
+      }
+
+      function renderAnimals() {
+        elements.animalTable.innerHTML = state.animals.map((animal) => `
+          <tr>
+            <td><img class="thumb" src="${animal.images && animal.images.length > 0 ? animal.images[0] : cuteFallback}" alt="${animal.name}" onerror="this.onerror=null;this.src='${cuteFallback}'" /></td>
+            <td>
+              <strong>${animal.name}</strong><br/>
+              <small class="muted">${animal.species}${animal.breed ? ' · ' + animal.breed : ''}${animal.age ? ' · ' + animal.age : ''}</small><br/>
+              <small class="muted">${animal.description}</small>
+            </td>
+            <td>${categoryLabel(animal)}</td>
+            <td>${currency(animal.price)}</td>
+            <td>${animal.stockQuantity}</td>
+            <td>${animal.featured ? 'Yes' : 'No'}</td>
+            <td>
+              <div class="actions">
+                <button class="secondary" type="button" data-edit-animal="${animal.id}">Edit</button>
+                <button class="danger" type="button" data-delete-animal="${animal.id}">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `).join('') || '<tr><td colspan="7" class="muted">No pets yet.</td></tr>';
+
+        elements.animalCountPill.textContent = `${state.animals.length} pets`;
+      }
+
+      async function submitCategory(event) {
+        event.preventDefault();
+        const name = elements.categoryName.value.trim();
+        if (!name) return;
+
+        try {
+          await requestJson('/api/admin/categories', {
+            method: 'POST',
+            body: JSON.stringify({ name }),
+          });
+          elements.categoryForm.reset();
+          await loadCategories();
+          await loadAnimals();
+          setStatus(`Category "${name}" created.`);
+        } catch (error) {
+          setStatus(error.message || 'Unable to create category.', true);
+        }
+      }
+
+      async function submitAnimal(event) {
+        event.preventDefault();
+        const imageUrl = elements.imageUrl.value.trim();
+        const payload = {
+          name: elements.animalName.value.trim(),
+          species: elements.species.value.trim(),
+          breed: elements.breed.value.trim(),
+          age: elements.age.value.trim(),
+          description: elements.description.value.trim(),
+          price: Number(elements.price.value),
+          stockQuantity: Number(elements.stockQuantity.value),
+          images: imageUrl ? [imageUrl] : [],
+          featured: elements.featured.value === 'true',
+          categoryId: Number(elements.categorySelect.value),
+        };
+
+        if (!payload.name || !payload.species || !payload.description || !payload.categoryId) {
+          setStatus('Please complete all required animal fields.', true);
+          return;
+        }
+
+        const isEditing = Boolean(state.editingAnimalId);
+        try {
+          const saved = await requestJson(isEditing ? `/api/admin/animals/${state.editingAnimalId}` : '/api/admin/animals', {
+            method: isEditing ? 'PUT' : 'POST',
+            body: JSON.stringify(payload),
+          });
+
+          const imageFile = elements.imageFile.files && elements.imageFile.files[0];
+          if (imageFile) {
+            const formData = new FormData();
+            formData.append('file', imageFile);
+            const response = await fetch(`/api/admin/animals/${saved.id}/image`, {
+              method: 'POST',
+              body: formData,
+            });
+            if (!response.ok) {
+              throw new Error(await response.text());
+            }
+          }
+
+          await loadAnimals();
+          resetAnimalForm();
+          setStatus(isEditing ? 'Pet updated successfully.' : 'Pet added successfully.');
+        } catch (error) {
+          setStatus(error.message || 'Unable to save pet.', true);
+        }
+      }
+
+      async function deleteCategory(id) {
+        if (!confirm('Delete this category? Pets in that category must be removed first.')) return;
+        try {
+          await requestJson(`/api/admin/categories/${id}`, { method: 'DELETE' });
+          await loadCategories();
+          await loadAnimals();
+          setStatus('Category deleted.');
+        } catch (error) {
+          setStatus(error.message || 'Unable to delete category.', true);
+        }
+      }
+
+      async function deleteAnimal(id) {
+        if (!confirm('Delete this pet listing?')) return;
+        try {
+          await requestJson(`/api/admin/animals/${id}`, { method: 'DELETE' });
+          await loadAnimals();
+          setStatus('Pet deleted.');
+        } catch (error) {
+          setStatus(error.message || 'Unable to delete pet.', true);
+        }
+      }
+
+      function beginEditAnimal(id) {
+        const animal = state.animals.find((item) => String(item.id) === String(id));
+        if (!animal) return;
+        state.editingAnimalId = animal.id;
+        elements.animalId.value = animal.id;
+        elements.animalName.value = animal.name || '';
+        elements.species.value = animal.species || '';
+        elements.breed.value = animal.breed || '';
+        elements.age.value = animal.age || '';
+        elements.description.value = animal.description || '';
+        elements.price.value = animal.price ?? '';
+        elements.stockQuantity.value = animal.stockQuantity ?? '';
+        elements.imageUrl.value = animal.images && animal.images.length > 0 ? animal.images[0] : '';
+        elements.featured.value = String(Boolean(animal.featured));
+        elements.categorySelect.value = animal.categoryId ? String(animal.categoryId) : '';
+        elements.editingTag.textContent = `Editing #${animal.id}`;
+        setStatus(`Editing ${animal.name}.`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+
+        const editId = target.getAttribute('data-edit-animal');
+        const deleteId = target.getAttribute('data-delete-animal');
+        const deleteCategoryId = target.getAttribute('data-delete-category');
+
+        if (editId) beginEditAnimal(editId);
+        if (deleteId) deleteAnimal(deleteId);
+        if (deleteCategoryId) deleteCategory(deleteCategoryId);
+      });
+
+      elements.categoryForm.addEventListener('submit', submitCategory);
+      elements.animalForm.addEventListener('submit', submitAnimal);
+      elements.clearAnimalButton.addEventListener('click', resetAnimalForm);
+      elements.logoutButton.addEventListener('click', () => window.location.assign('/admin/logout'));
+      elements.resetCategoryButton.addEventListener('click', () => elements.categoryForm.reset());
+
+      (async function init() {
+        try {
+          await loadCategories();
+          await loadAnimals();
+          resetAnimalForm();
+        } catch (error) {
+          setStatus(error.message || 'Unable to load dashboard data.', true);
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,49 +1,54 @@
 package com.quiambao.mypetstore.catalog;
 
-import java.math.BigDecimal;
-import java.util.List;
+import com.quiambao.mypetstore.inventory.AnimalRepository;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CatalogService {
 
+    private final AnimalRepository animalRepository;
+
+    public CatalogService(AnimalRepository animalRepository) {
+        this.animalRepository = animalRepository;
+    }
+
     public List<PetListing> findFeaturedCatalog() {
-        return List.of(
-                new PetListing(
-                        1L,
-                        "Golden Retriever Puppy",
-                        PetCategory.DOGS,
-                        new BigDecimal("1200.00"),
-                        "Friendly family companion with playful energy.",
-                        "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=900&q=80",
-                        true,
-                        4),
-                new PetListing(
-                        2L,
-                        "Maine Coon Cat",
-                        PetCategory.CATS,
-                        new BigDecimal("900.00"),
-                        "Large, affectionate cat with a calm temperament.",
-                        "https://images.unsplash.com/photo-1519052537078-e6302a4968d4?auto=format&fit=crop&w=900&q=80",
-                        true,
-                        6),
-                new PetListing(
-                        3L,
-                        "Sun Conure",
-                        PetCategory.BIRDS,
-                        new BigDecimal("450.00"),
-                        "Bright, social bird with a bold personality.",
-                        "https://images.unsplash.com/photo-1501706362039-c6e80948c85d?auto=format&fit=crop&w=900&q=80",
-                        true,
-                        2),
-                new PetListing(
-                        4L,
-                        "Betta Fish Starter Set",
-                        PetCategory.FISHES,
-                        new BigDecimal("85.00"),
-                        "Colorful beginner-friendly aquarium companion.",
-                        "https://images.unsplash.com/photo-1524704654690-b56c7d9a38f6?auto=format&fit=crop&w=900&q=80",
-                        false,
-                        10));
+        // use repository method that fetches category with JOIN FETCH to avoid lazy-init errors
+        return animalRepository.findFeaturedWithCategory().stream()
+                .map(animal -> new PetListing(
+                        animal.getId(),
+                        animal.getName(),
+                        animal.getCategory().getSlug(),
+                        animal.getCategory().getName(),
+                        animal.getSpecies(),
+                        animal.getPrice(),
+                        animal.getDescription(),
+                        animal.getImages(),
+                        animal.isFeatured(),
+                        animal.getStockQuantity(),
+                        animal.getBreed(),
+                        animal.getAge()))
+                .collect(Collectors.toList());
+    }
+
+    public List<PetListing> findAllCatalog() {
+        // Fetch all animals with their categories joined to avoid lazy-init errors
+        return animalRepository.findAllWithCategory().stream()
+                .map(animal -> new PetListing(
+                        animal.getId(),
+                        animal.getName(),
+                        animal.getCategory().getSlug(),
+                        animal.getCategory().getName(),
+                        animal.getSpecies(),
+                        animal.getPrice(),
+                        animal.getDescription(),
+                        animal.getImages(),
+                        animal.isFeatured(),
+                        animal.getStockQuantity(),
+                        animal.getBreed(),
+                        animal.getAge()))
+                .collect(Collectors.toList());
     }
 }

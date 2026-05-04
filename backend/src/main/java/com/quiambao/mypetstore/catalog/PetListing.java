@@ -2,34 +2,48 @@ package com.quiambao.mypetstore.catalog;
 
 import java.math.BigDecimal;
 
+import java.util.List;
+
 public final class PetListing {
 
         private final Long id;
         private final String name;
-        private final PetCategory category;
+        private final String category;
+        private final String categoryName;
+        private final String species;
         private final BigDecimal price;
         private final String description;
-        private final String imageUrl;
+        private final List<String> images;
         private final boolean featured;
         private final int stockQuantity;
+        private final String breed;
+        private final String age;
 
         public PetListing(
                         Long id,
                         String name,
-                        PetCategory category,
+                        String category,
+                        String categoryName,
+                        String species,
                         BigDecimal price,
                         String description,
-                        String imageUrl,
+                        List<String> images,
                         boolean featured,
-                        int stockQuantity) {
+                        int stockQuantity,
+                        String breed,
+                        String age) {
                 this.id = id;
                 this.name = name;
                 this.category = category;
+                this.categoryName = categoryName;
+                this.species = species;
                 this.price = price;
                 this.description = description;
-                this.imageUrl = imageUrl;
+                this.images = images;
                 this.featured = featured;
                 this.stockQuantity = stockQuantity;
+                this.breed = breed;
+                this.age = age;
         }
 
         public Long getId() {
@@ -40,8 +54,16 @@ public final class PetListing {
                 return name;
         }
 
-        public PetCategory getCategory() {
+        public String getCategory() {
                 return category;
+        }
+
+        public String getCategoryName() {
+                return categoryName;
+        }
+
+        public String getSpecies() {
+                return species;
         }
 
         public BigDecimal getPrice() {
@@ -52,8 +74,8 @@ public final class PetListing {
                 return description;
         }
 
-        public String getImageUrl() {
-                return imageUrl;
+        public List<String> getImages() {
+                return images;
         }
 
         public boolean isFeatured() {
@@ -62,5 +84,13 @@ public final class PetListing {
 
         public int getStockQuantity() {
                 return stockQuantity;
+        }
+
+        public String getBreed() {
+                return breed;
+        }
+
+        public String getAge() {
+                return age;
         }
 }

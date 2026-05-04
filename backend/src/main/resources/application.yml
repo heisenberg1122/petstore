@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:8080}
+  port: ${PORT:8081}
 
 spring:
   application:
@@ -11,7 +11,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     open-in-view: false
     properties:
       hibernate:
@@ -20,3 +20,7 @@ spring:
 app:
   cors:
     allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}
+  storage:
+    upload-dir: ${APP_UPLOAD_DIR:uploads}
+  admin:
+    login-url: ${APP_ADMIN_LOGIN_URL:http://localhost:5173/admin/login}
