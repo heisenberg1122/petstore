@@ -1,0 +1,10 @@
+target/
+.git
+.gitignore
+.env
+.env.local
+node_modules
+.DS_Store
+*.class
+*.jar
+!pom.xml
