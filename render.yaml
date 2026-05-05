@@ -30,8 +30,13 @@ services:
     runtime: static
     plan: free
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --legacy-peer-deps && npm run build
     staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://mypetstore-api.onrender.com
+      - key: VITE_ADMIN_PANEL_URL
+        value: https://mypetstore-api.onrender.com/admin
     routes:
       - type: rewrite
         source: /*
