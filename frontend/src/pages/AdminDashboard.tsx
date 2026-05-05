@@ -7,7 +7,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const backendAdminUrl = import.meta.env.VITE_ADMIN_PANEL_URL || 'http://localhost:8081/admin';
+  const backendAdminUrl = import.meta.env.VITE_ADMIN_PANEL_URL || 'http://localhost:8082/admin';
 
   useEffect(() => {
     if (!sessionStorage.getItem('isAdmin')) {

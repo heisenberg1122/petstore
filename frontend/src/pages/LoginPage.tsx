@@ -15,7 +15,7 @@ import {
   signInWithPopup,
   updateProfile
 } from 'firebase/auth';
-import { auth, googleProvider, facebookProvider, isFirebaseConfigured } from './firebaseConfig';
+import { auth, googleProvider, facebookProvider, isFirebaseConfigured } from '../config/firebaseConfig';
 
 // ── Cute paw SVG illustration ─────────────────────────────────────────────────
 function CutePawIllustration() {

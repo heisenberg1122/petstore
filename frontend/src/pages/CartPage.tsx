@@ -3,11 +3,11 @@ import {
   Box, Button, Card, CardMedia, Container, Divider, Grid,
   IconButton, Stack, Typography, alpha, Chip,
 } from '@mui/material';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteIcon from '@mui/icons-material/Delete';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { PetListing, cutePawFallback } from './data';
-import { bustImageCache } from './utils';
+import { PetListing, cutePawFallback } from '../data';
+import { bustImageCache } from '../utils';
 
 interface CartItem extends PetListing { quantity: number; }
 
@@ -99,7 +99,7 @@ export default function CartPage({
                               <Typography sx={{ minWidth: 32, textAlign: 'center', fontWeight: 900, fontSize: '1.1rem' }}>{item.quantity}</Typography>
                               <Button size="small" variant="outlined" onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} sx={{ minWidth: 36, px: 0 }}>+</Button>
                               <IconButton color="error" onClick={() => onRemove(item.id)} size="small">
-                                <DeleteOutlineIcon />
+                                <DeleteIcon />
                               </IconButton>
                             </Stack>
                           </Stack>

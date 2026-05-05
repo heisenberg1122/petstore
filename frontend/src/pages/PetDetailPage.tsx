@@ -3,8 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { Box, Button, Chip, Container, Grid, Stack, Typography, alpha, useTheme, Card, CardContent, CardMedia, Divider } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
-import { PetListing, cutePawFallback, fallbackCatalog } from './data';
-import { bustImageCache } from './utils';
+import { PetListing, cutePawFallback, fallbackCatalog } from '../data';
+import { bustImageCache } from '../utils';
 
 function currency(value: string | number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value));

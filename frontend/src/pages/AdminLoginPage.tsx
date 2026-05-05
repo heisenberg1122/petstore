@@ -8,13 +8,13 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const backendAdminUrl = import.meta.env.VITE_ADMIN_PANEL_URL || 'http://localhost:8081/admin';
+  const backendAdminUrl = import.meta.env.VITE_ADMIN_PANEL_URL || 'http://localhost:8082/admin';
   const [form, setForm] = useState({ username: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -98,7 +98,7 @@ export default function AdminLoginPage() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonOutlineIcon sx={{ color: '#ff8a65' }} />
+                      <PersonIcon sx={{ color: '#ff8a65' }} />
                     </InputAdornment>
                   ),
                 }}

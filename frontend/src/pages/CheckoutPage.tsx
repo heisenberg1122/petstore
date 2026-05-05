@@ -9,11 +9,11 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import dayjs, { Dayjs } from 'dayjs';
-import { useAuth } from './AuthContext';
-import { PetListing } from './data';
-import { bustImageCache } from './utils';
+import { useAuth } from '../AuthContext';
+import { PetListing } from '../data';
+import { bustImageCache } from '../utils';
 
 interface CartItem extends PetListing { quantity: number; }
 
@@ -80,7 +80,7 @@ export default function CheckoutPage({
       <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(255,138,101,0.08), rgba(73,197,182,0.10))' }}>
         <Container maxWidth="sm">
           <Card sx={{ p: 5, textAlign: 'center', borderRadius: 8, boxShadow: '0 32px 80px rgba(36,48,71,0.12)' }}>
-            <CheckCircleOutlineIcon sx={{ fontSize: 100, color: 'success.main', mb: 3 }} />
+            <CheckCircleIcon sx={{ fontSize: 100, color: 'success.main', mb: 3 }} />
             <Typography variant="h3" fontWeight={900} sx={{ mb: 2 }}>Adoption Requested! 🎉</Typography>
             <Typography color="text.secondary" variant="h6" sx={{ mb: 4 }}>
               We've received your request to take these cuties home. We'll contact you soon to confirm your pickup/delivery for {scheduledDate?.format('MMMM D, YYYY')} at {scheduledTime?.format('h:mm A')}.

@@ -1,19 +1,18 @@
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import PetDetailPage from './PetDetailPage';
-import CartPage from './CartPage';
-import AboutPage from './AboutPage';
-import ContactPage from './ContactPage';
-import LoginPage from './LoginPage';
-import AdminLoginPage from './AdminLoginPage';
-import AdminDashboard from './AdminDashboard';
-import CheckoutPage from './CheckoutPage';
+import PetDetailPage from './pages/PetDetailPage';
+import CartPage from './pages/CartPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import LoginPage from './pages/LoginPage';
+import AdminLoginPage from './pages/AdminLoginPage';
+import AdminDashboard from './pages/AdminDashboard';
+import CheckoutPage from './pages/CheckoutPage';
 import { useAuth } from './AuthContext';
 import SearchIcon from '@mui/icons-material/Search';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import PetsOutlinedIcon from '@mui/icons-material/PetsOutlined';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import {
   AppBar,
   Avatar,

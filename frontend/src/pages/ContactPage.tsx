@@ -4,7 +4,7 @@ import { Box, Button, Card, Container, Grid, Stack, TextField, Typography, alpha
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export default function ContactPage() {
@@ -67,7 +67,7 @@ export default function ContactPage() {
             <Card sx={{ p: 3.5, border: '1px solid rgba(36,48,71,0.08)', boxShadow: '0 16px 40px rgba(36,48,71,0.08)' }}>
               {submitted ? (
                 <Box sx={{ textAlign: 'center', py: 8 }}>
-                  <CheckCircleOutlineIcon sx={{ fontSize: 72, color: 'success.main', mb: 2 }} />
+                  <CheckCircleIcon sx={{ fontSize: 72, color: 'success.main', mb: 2 }} />
                   <Typography variant="h4" sx={{ mb: 2 }}>Message Sent! 🎉</Typography>
                   <Typography color="text.secondary" sx={{ mb: 4 }}>
                     Thank you, {form.name}! We have received your message and will get back to you at {form.email} within 24 hours.
