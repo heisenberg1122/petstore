@@ -23,7 +23,7 @@ services:
           name: mypetstore-db
           property: password
       - key: APP_CORS_ALLOWED_ORIGIN
-        value: "*"
+        value: https://mypetstore-web.onrender.com
 
   - type: static
     name: mypetstore-web
