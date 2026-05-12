@@ -32,9 +32,9 @@ the backend on `http://localhost:8082`.
 ### Firebase login setup
 
 Customer login uses Firebase Authentication for email/password, Google, and
-Facebook sign-in. Create `frontend/.env` with your Firebase web app values using
-the `VITE_FIREBASE_*` keys, then enable the Google and Facebook providers in
-the Firebase Console.
+Facebook sign-in. Copy `frontend/.env.example` to `frontend/.env`, fill in your
+Firebase web app values using the `VITE_FIREBASE_*` keys, then enable the Google
+and Facebook providers in the Firebase Console.
 
 The admin frontend opens the backend admin panel. Use `VITE_ADMIN_PANEL_URL`
 in `frontend/.env` to point it at your backend admin URL when it differs from

@@ -1,6 +1,5 @@
 /.idea/
 /.vscode/
-/.specify/**/tasks.md
 /backend/target/
 /frontend/dist/
 /frontend/node_modules/
