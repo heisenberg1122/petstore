@@ -11,3 +11,6 @@
 /node_modules/
 *.log
 *.class
+
+# Keep Specify task files tracked
+!/.specify/**/tasks.md
