@@ -1,5 +1,6 @@
 /.idea/
 /.vscode/
+/.specify/**/tasks.md
 /backend/target/
 /frontend/dist/
 /frontend/node_modules/
@@ -11,6 +12,3 @@
 /node_modules/
 *.log
 *.class
-
-# Keep Specify task files tracked
-!/.specify/**/tasks.md
