@@ -23,7 +23,6 @@ import {
   CardContent,
   CardMedia,
   Chip,
-  CircularProgress,
   Container,
   CssBaseline,
   Dialog,
@@ -433,14 +432,7 @@ function AppContent() {
         <Route 
           path="/checkout" 
           element={
-            authLoading ? (
-              <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
-                <CircularProgress />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2, fontWeight: 700 }}>
-                  Checking your login session...
-                </Typography>
-              </Container>
-            ) : user ? (
+            user ? (
               <CheckoutPage cart={cart} onClear={clearCart} />
             ) : (
               <Navigate to="/login" state={{ from: location }} replace />
